@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مراجعة أحياء أول ثانوي</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .flashcard {
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+
+        .chapter-card {
+            transition: all 0.3s ease;
+        }
+
+        .chapter-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .quiz-option {
+            transition: all 0.2s ease;
+        }
+
+        .quiz-option:hover {
+            transform: scale(1.02);
+        }
+
+        .quiz-option.correct {
+            animation: correctPulse 0.5s ease;
+        }
+
+        .quiz-option.wrong {
+            animation: wrongShake 0.5s ease;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="w-full h-full overflow-auto"></div>
+  <script>
+        const defaultConfig = {
+            app_title: "مراجعة أحياء أول ثانوي",
+            app_subtitle: "الفصل الدراسي الأول",
+            primary_color: "#10b981",
+            secondary_color: "#ffffff",
+            text_color: "#1f2937",
+            accent_color: "#3b82f6",
+            surface_color: "#f3f4f6",
+            font_family: "system-ui",
+            font_size: 16
+        };
+
+        const chapters = [
+            {
+                id: 1,
+                title: "دراسة الحياة",
+                icon: "🔬",
+                topics: ["مدخل إلى علم الأحياء", "طبيعة العلم وطرائقه"],
+                flashcards: [
+                    { front: "ما هو علم الأحياء؟", back: "العلم الذي يدرس الكائنات الحية وتفاعلاتها مع بعضها ومع البيئة" },
+                    { front: "ما هي الطريقة العلمية؟", back: "منهج منظم لحل المشكلات يتضمن الملاحظة، الفرضية، التجربة، والاستنتاج" },
+                    { front: "ما هي الفرضية؟", back: "تفسير محتمل قابل للاختبار يعتمد على الملاحظة والمعرفة السابقة" }
+                ],
+                quiz: [
+                    {
+                        question: "أول خطوة في الطريقة العلمية هي:",
+                        options: ["الملاحظة", "الفرضية", "التجربة", "النتيجة"],
+                        correct: 0
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "تنظيم تنوع الحياة",
+                icon: "🌿",
+                topics: ["خصائص الحياة", "مستويات التنظيم", "التسمية والتصنيف"],
+                flashcards: [
+                    { front: "ما هي خصائص الحياة الأساسية؟", back: "التنظيم، النمو، التكاثر، الاستجابة للمؤثرات، الحاجة للطاقة، والتكيف" },
+                    { front: "ما هو التصنيف؟", back: "علم تسمية وتقسيم الكائنات الحية إلى مجموعات بناءً على خصائصها المشتركة" },
+                    { front: "من واضع نظام التسمية الثنائية؟", back: "العالم كارلوس لينيوس" },
+                    { front: "ما هي مستويات التصنيف؟", back: "المملكة، الشعبة، الطائفة، الرتبة، الفصيلة، الجنس، النوع" }
+                ],
+                quiz: [
+                    {
+                        question: "أصغر وحدة في التصنيف هي:",
+                        options: ["الجنس", "النوع", "الفصيلة", "المملكة"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "البكتيريا والفيروسات",
+                icon: "🦠",
+                topics: ["خصائص البكتيريا", "الفيروسات", "البريونات"],
+                flashcards: [
+                    { front: "ما هي البكتيريا؟", back: "كائنات حية دقيقة وحيدة الخلية بدائية النواة" },
+                    { front: "ما هي الفيروسات؟", back: "جسيمات دقيقة غير حية تتكون من مادة وراثية محاطة بغلاف بروتيني" },
+                    { front: "كيف تتكاثر الفيروسات؟", back: "تتكاثر داخل خلايا الكائنات الحية فقط" },
+                    { front: "ما هي البريونات؟", back: "بروتينات معدية غير طبيعية تسبب أمراضاً عصبية" }
+                ],
+                quiz: [
+                    {
+                        question: "البكتيريا خلايا:",
+                        options: ["بدائية النواة", "حقيقية النواة", "بلا نواة", "متعددة النوى"],
+                        correct: 0
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "الطلائعيات",
+                icon: "🦠",
+                topics: ["مدخل للطلائعيات", "تنوع الطلائعيات", "أمثلة على الطلائعيات"],
+                flashcards: [
+                    { front: "ما هي الطلائعيات؟", back: "كائنات حقيقية النواة معظمها وحيد الخلية، لا تنتمي للنباتات أو الحيوانات أو الفطريات" },
+                    { front: "ما هي الطحالب؟", back: "طلائعيات ذاتية التغذية تحتوي على الكلوروفيل وتقوم بالبناء الضوئي" },
+                    { front: "ما هي الأوليات؟", back: "طلائعيات غيرية التغذية شبيهة بالحيوانات" },
+                    { front: "مثال على الطلائعيات الشبيهة بالفطريات؟", back: "الفطريات المائية والفطريات الغروية" }
+                ],
+                quiz: [
+                    {
+                        question: "الطلائعيات خلايا:",
+                        options: ["بدائية النواة", "حقيقية النواة", "بلا نواة", "فيروسية"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                id: 5,
+                title: "الفطريات",
+                icon: "🍄",
+                topics: ["مدخل للفطريات", "تنوع الفطريات", "الحصول على الغذاء"],
+                flashcards: [
+                    { front: "ما هي الفطريات؟", back: "كائنات حقيقية النواة غيرية التغذية لها جدار خلوي من الكايتين" },
+                    { front: "كيف تحصل الفطريات على غذائها؟", back: "بإفراز إنزيمات هاضمة على المادة العضوية ثم امتصاص الغذاء المهضوم" },
+                    { front: "ما هي الخيوط الفطرية؟", back: "تراكيب خيطية تشكل جسم الفطر وتسمى الهيفات" },
+                    { front: "أنواع التغذية في الفطريات؟", back: "رمية (على المواد الميتة)، تطفلية (على كائنات حية)، تكافلية (تعايش)" }
+                ],
+                quiz: [
+                    {
+                        question: "جدار الخلية في الفطريات يتكون من:",
+                        options: ["السليلوز", "الكايتين", "البروتين", "الدهون"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                id: 6,
+                title: "مدخل إلى الحيوانات",
+                icon: "🐠",
+                topics: ["خصائص الحيوانات", "مستويات بناء الجسم", "الإسفنجيات واللاسعات"],
+                flashcards: [
+                    { front: "ما هي خصائص الحيوانات؟", back: "عديدة الخلايا، حقيقية النواة، غيرية التغذية، قادرة على الحركة" },
+                    { front: "ما هي الإسفنجيات؟", back: "حيوانات بسيطة عديمة التماثل تعيش في الماء وتتغذى بالترشيح" },
+                    { front: "ما هي اللاسعات؟", back: "حيوانات ذات تماثل شعاعي لها خلايا لاسعة مثل قنديل البحر والمرجان" },
+                    { front: "ما هي مستويات التنظيم في الحيوانات؟", back: "خلوي، نسيجي، عضوي، جهازي" }
+                ],
+                quiz: [
+                    {
+                        question: "الإسفنجيات حيوانات:",
+                        options: ["عديمة التماثل", "شعاعية التماثل", "جانبية التماثل", "كروية"],
+                        correct: 0
+                    }
+                ]
+            },
+            {
+                id: 7,
+                title: "الديدان والرخويات",
+                icon: "🐌",
+                topics: ["الديدان المفلطحة", "الديدان الأسطوانية", "الرخويات", "الديدان الحلقية"],
+                flashcards: [
+                    { front: "ما هي الديدان المفلطحة؟", back: "ديدان جسمها مفلطح، بعضها حر وبعضها متطفل مثل الدودة الشريطية" },
+                    { front: "ما هي الديدان الأسطوانية؟", back: "ديدان أسطوانية الشكل لها تجويف جسمي كاذب مثل الإسكارس" },
+                    { front: "ما هي الرخويات؟", back: "حيوانات لها جسم رخو وأغلبها له صدفة مثل الحلزون والأخطبوط" },
+                    { front: "ما هي الديدان الحلقية؟", back: "ديدان جسمها مقسم إلى حلقات لها تجويف جسمي حقيقي مثل دودة الأرض" }
+                ],
+                quiz: [
+                    {
+                        question: "دودة الأرض من:",
+                        options: ["الديدان المفلطحة", "الديدان الأسطوانية", "الديدان الحلقية", "الرخويات"],
+                        correct: 2
+                    }
+                ]
+            },
+            {
+                id: 8,
+                title: "المفصليات",
+                icon: "🦗",
+                topics: ["خصائص المفصليات", "تنوع المفصليات", "الحشرات"],
+                flashcards: [
+                    { front: "ما هي المفصليات؟", back: "أكبر شعب الحيوانات، لها هيكل خارجي وزوائد مفصلية" },
+                    { front: "ما هو الهيكل الخارجي؟", back: "غطاء صلب يحمي الجسم ويمنع فقدان الماء ويتكون من الكايتين" },
+                    { front: "ما هي طوائف المفصليات؟", back: "القشريات، العنكبيات، عديدة الأرجل، الحشرات" },
+                    { front: "خصائص الحشرات؟", back: "جسمها مقسم لثلاثة أجزاء، لها 6 أرجل وزوج أو زوجان من الأجنحة" },
+                    { front: "ما هو الانسلاخ؟", back: "عملية تخلص المفصليات من الهيكل الخارجي القديم لتنمو" }
+                ],
+                quiz: [
+                    {
+                        question: "عدد أرجل الحشرات:",
+                        options: ["4", "6", "8", "10"],
+                        correct: 1
+                    }
+                ]
+            }
+        ];
+
+        let currentView = 'home';
+        let currentChapter = null;
+        let currentFlashcardIndex = 0;
+        let currentQuizIndex = 0;
+        let quizScore = 0;
+
+        async function onConfigChange(config) {
+            const baseSize = config.font_size || defaultConfig.font_size;
+            const customFont = config.font_family || defaultConfig.font_family;
+            const baseFontStack = 'system-ui, -apple-system, sans-serif';
+            
+            document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+            document.body.style.fontSize = `${baseSize}px`;
+            document.body.style.background = config.surface_color || defaultConfig.surface_color;
+            
+            render();
+        }
+
+        function render() {
+            const config = window.elementSdk ? window.elementSdk.config : defaultConfig;
+            const app = document.getElementById('app');
+            
+            if (currentView === 'home') {
+                app.innerHTML = renderHome(config);
+            } else if (currentView === 'flashcards') {
+                app.innerHTML = renderFlashcards(config);
+            } else if (currentView === 'quiz') {
+                app.innerHTML = renderQuiz(config);
+            }
+            
+            attachEventListeners();
+        }
+
+        function renderHome(config) {
+            const baseSize = config.font_size || defaultConfig.font_size;
+            const primaryColor = config.primary_color || defaultConfig.primary_color;
+            const secondaryColor = config.secondary_color || defaultConfig.secondary_color;
+            const textColor = config.text_color || defaultConfig.text_color;
+            const accentColor = config.accent_color || defaultConfig.accent_color;
+            const title = config.app_title || defaultConfig.app_title;
+            const subtitle = config.app_subtitle || defaultConfig.app_subtitle;
+            
+            return `
+                <div class="w-full" style="min-height: 100%; background: linear-gradient(135deg, ${primaryColor}15 0%, ${accentColor}15 100%); padding: 32px 16px;">
+                    <header class="text-center fade-in" style="margin-bottom: 48px;">
+                        <h1 style="font-size: ${baseSize * 2.5}px; font-weight: 800; color: ${textColor}; margin-bottom: 12px;">
+                            ${title}
+                        </h1>
+                        <p style="font-size: ${baseSize * 1.2}px; color: ${textColor}; opacity: 0.7;">
+                            ${subtitle}
+                        </p>
+                    </header>
+                    
+                    <main style="max-width: 1200px; margin: 0 auto;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                            ${chapters.map(chapter => `
+                                <div class="chapter-card fade-in" style="background: ${secondaryColor}; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; border: 2px solid transparent;">
+                                    <div style="font-size: ${baseSize * 3}px; margin-bottom: 16px; text-align: center;">
+                                        ${chapter.icon}
+                                    </div>
+                                    <h2 style="font-size: ${baseSize * 1.4}px; font-weight: 700; color: ${textColor}; margin-bottom: 12px; text-align: center;">
+                                        الفصل ${chapter.id}: ${chapter.title}
+                                    </h2>
+                                    <div style="margin-bottom: 20px;">
+                                        ${chapter.topics.map(topic => `
+                                            <div style="font-size: ${baseSize * 0.9}px; color: ${textColor}; opacity: 0.7; margin-bottom: 6px; padding-right: 12px; position: relative;">
+                                                <span style="position: absolute; right: 0; top: 2px;">•</span>
+                                                ${topic}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                        <button onclick="startFlashcards(${chapter.id})" style="background: ${primaryColor}; color: white; border: none; border-radius: 8px; padding: 12px; font-size: ${baseSize * 0.9}px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                            🎴 البطاقات
+                                        </button>
+                                        <button onclick="startQuiz(${chapter.id})" style="background: ${accentColor}; color: white; border: none; border-radius: 8px; padding: 12px; font-size: ${baseSize * 0.9}px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                            📝 اختبار
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </main>
+                </div>
+            `;
+        }
+
+        function renderFlashcards(config) {
+            const baseSize = config.font_size || defaultConfig.font_size;
+            const primaryColor = config.primary_color || defaultConfig.primary_color;
+            const secondaryColor = config.secondary_color || defaultConfig.secondary_color;
+            const textColor = config.text_color || defaultConfig.text_color;
+            const accentColor = config.accent_color || defaultConfig.accent_color;
+            
+            const chapter = chapters.find(ch => ch.id === currentChapter);
+            const flashcard = chapter.flashcards[currentFlashcardIndex];
+            const progress = ((currentFlashcardIndex + 1) / chapter.flashcards.length) * 100;
+            
+            return `
+                <div class="w-full" style="min-height: 100%; background: linear-gradient(135deg, ${primaryColor}15 0%, ${accentColor}15 100%); padding: 32px 16px;">
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                            <button onclick="goHome()" style="background: ${secondaryColor}; color: ${textColor}; border: none; border-radius: 8px; padding: 12px 24px; font-size: ${baseSize}px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                ← الرئيسية
+                            </button>
+                            <div style="text-align: center;">
+                                <h2 style="font-size: ${baseSize * 1.8}px; font-weight: 700; color: ${textColor}; margin-bottom: 4px;">
+                                    ${chapter.icon} ${chapter.title}
+                                </h2>
+                                <p style="font-size: ${baseSize * 0.9}px; color: ${textColor}; opacity: 0.7;">
+                                    البطاقة ${currentFlashcardIndex + 1} من ${chapter.flashcards.length}
+                                </p>
+                            </div>
+                            <div style="width: 120px;"></div>
+                        </div>
+                        
+                        <div style="background: ${secondaryColor}; border-radius: 8px; height: 8px; margin-bottom: 32px; overflow: hidden;">
+                            <div style="background: ${primaryColor}; height: 100%; width: ${progress}%; transition: width 0.3s;"></div>
+                        </div>
+                        
+                        <div class="flashcard fade-in" id="flashcard" onclick="flipCard()" style="height: 400px; margin-bottom: 32px;">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front" style="background: ${secondaryColor}; border: 3px solid ${primaryColor};">
+                                    <h3 style="font-size: ${baseSize * 1.5}px; font-weight: 600; color: ${textColor}; line-height: 1.6;">
+                                        ${flashcard.front}
+                                    </h3>
+                                </div>
+                                <div class="flashcard-back" style="background: ${primaryColor}; color: white;">
+                                    <p style="font-size: ${baseSize * 1.3}px; font-weight: 500; line-height: 1.6;">
+                                        ${flashcard.back}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; font-size: ${baseSize * 0.9}px; color: ${textColor}; opacity: 0.6; margin-bottom: 24px;">
+                            انقر على البطاقة لقلبها
+                        </div>
+                        
+                        <div style="display: flex; justify-content: center; gap: 16px;">
+                            <button onclick="previousCard()" ${currentFlashcardIndex === 0 ? 'disabled' : ''} style="background: ${secondaryColor}; color: ${textColor}; border: 2px solid ${primaryColor}; border-radius: 8px; padding: 14px 32px; font-size: ${baseSize}px; font-weight: 600; cursor: pointer; opacity: ${currentFlashcardIndex === 0 ? '0.5' : '1'};">
+                                → السابق
+                            </button>
+                            <button onclick="nextCard()" ${currentFlashcardIndex === chapter.flashcards.length - 1 ? 'disabled' : ''} style="background: ${primaryColor}; color: white; border: none; border-radius: 8px; padding: 14px 32px; font-size: ${baseSize}px; font-weight: 600; cursor: pointer; opacity: ${currentFlashcardIndex === chapter.flashcards.length - 1 ? '0.5' : '1'};">
+                                التالي ←
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQuiz(config) {
+            const baseSize = config.font_size || defaultConfig.font_size;
+            const primaryColor = config.primary_color || defaultConfig.primary_color;
+            const secondaryColor = config.secondary_color || defaultConfig.secondary_color;
+            const textColor = config.text_color || defaultConfig.text_color;
+            const accentColor = config.accent_color || defaultConfig.accent_color;
+            
+            const chapter = chapters.find(ch => ch.id === currentChapter);
+            
+            if (currentQuizIndex >= chapter.quiz.length) {
+                return `
+                    <div class="w-full" style="min-height: 100%; background: linear-gradient(135deg, ${primaryColor}15 0%, ${accentColor}15 100%); padding: 32px 16px; display: flex; align-items: center; justify-content: center;">
+                        <div class="fade-in" style="background: ${secondaryColor}; border-radius: 16px; padding: 48px; text-align: center; max-width: 500px; box-shadow: 0 8px 16px rgba(0,0,0,0.1);">
+                            <div style="font-size: ${baseSize * 4}px; margin-bottom: 24px;">
+                                ${quizScore === chapter.quiz.length ? '🎉' : '👏'}
+                            </div>
+                            <h2 style="font-size: ${baseSize * 2}px; font-weight: 700; color: ${textColor}; margin-bottom: 16px;">
+                                انتهى الاختبار!
+                            </h2>
+                            <p style="font-size: ${baseSize * 1.5}px; color: ${textColor}; margin-bottom: 32px;">
+                                درجتك: <span style="color: ${primaryColor}; font-weight: 700;">${quizScore}</span> من ${chapter.quiz.length}
+                            </p>
+                            <div style="display: flex; gap: 16px; justify-content: center;">
+                                <button onclick="restartQuiz()" style="background: ${primaryColor}; color: white; border: none; border-radius: 8px; padding: 14px 28px; font-size: ${baseSize}px; font-weight: 600; cursor: pointer;">
+                                    إعادة الاختبار
+                                </button>
+                                <button onclick="goHome()" style="background: ${secondaryColor}; color: ${textColor}; border: 2px solid ${primaryColor}; border-radius: 8px; padding: 14px 28px; font-size: ${baseSize}px; font-weight: 600; cursor: pointer;">
+                                    الرئيسية
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const question = chapter.quiz[currentQuizIndex];
+            
+            return `
+                <div class="w-full" style="min-height: 100%; background: linear-gradient(135deg, ${primaryColor}15 0%, ${accentColor}15 100%); padding: 32px 16px;">
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                            <button onclick="goHome()" style="background: ${secondaryColor}; color: ${textColor}; border: none; border-radius: 8px; padding: 12px 24px; font-size: ${baseSize}px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                ← الرئيسية
+                            </button>
+                            <div style="text-align: center;">
+                                <h2 style="font-size: ${baseSize * 1.8}px; font-weight: 700; color: ${textColor}; margin-bottom: 4px;">
+                                    ${chapter.icon} ${chapter.title}
+                                </h2>
+                                <p style="font-size: ${baseSize * 0.9}px; color: ${textColor}; opacity: 0.7;">
+                                    السؤال ${currentQuizIndex + 1} من ${chapter.quiz.length} • النقاط: ${quizScore}
+                                </p>
+                            </div>
+                            <div style="width: 120px;"></div>
+                        </div>
+                        
+                        <div class="fade-in" style="background: ${secondaryColor}; border-radius: 16px; padding: 40px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 32px;">
+                            <h3 style="font-size: ${baseSize * 1.6}px; font-weight: 600; color: ${textColor}; margin-bottom: 32px; line-height: 1.6;">
+                                ${question.question}
+                            </h3>
+                            <div style="display: grid; gap: 16px;">
+                                ${question.options.map((option, index) => `
+                                    <button onclick="checkAnswer(${index})" class="quiz-option" style="background: ${secondaryColor}; color: ${textColor}; border: 2px solid ${primaryColor}30; border-radius: 12px; padding: 20px; font-size: ${baseSize * 1.1}px; font-weight: 500; cursor: pointer; text-align: right; transition: all 0.2s;">
+                                        ${option}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachEventListeners() {
+            // Event listeners are attached via onclick attributes in the HTML
+        }
+
+        window.startFlashcards = function(chapterId) {
+            currentView = 'flashcards';
+            currentChapter = chapterId;
+            currentFlashcardIndex = 0;
+            render();
+        };
+
+        window.startQuiz = function(chapterId) {
+            currentView = 'quiz';
+            currentChapter = chapterId;
+            currentQuizIndex = 0;
+            quizScore = 0;
+            render();
+        };
+
+        window.goHome = function() {
+            currentView = 'home';
+            currentChapter = null;
+            render();
+        };
+
+        window.flipCard = function() {
+            const card = document.getElementById('flashcard');
+            if (card) {
+                card.classList.toggle('flipped');
+            }
+        };
+
+        window.nextCard = function() {
+            const chapter = chapters.find(ch => ch.id === currentChapter);
+            if (currentFlashcardIndex < chapter.flashcards.length - 1) {
+                currentFlashcardIndex++;
+                render();
+            }
+        };
+
+        window.previousCard = function() {
+            if (currentFlashcardIndex > 0) {
+                currentFlashcardIndex--;
+                render();
+            }
+        };
+
+        window.checkAnswer = function(selectedIndex) {
+            const chapter = chapters.find(ch => ch.id === currentChapter);
+            const question = chapter.quiz[currentQuizIndex];
+            const buttons = document.querySelectorAll('.quiz-option');
+            const config = window.elementSdk ? window.elementSdk.config : defaultConfig;
+            const primaryColor = config.primary_color || defaultConfig.primary_color;
+            
+            if (selectedIndex === question.correct) {
+                buttons[selectedIndex].classList.add('correct');
+                buttons[selectedIndex].style.background = primaryColor;
+                buttons[selectedIndex].style.color = 'white';
+                buttons[selectedIndex].style.borderColor = primaryColor;
+                quizScore++;
+            } else {
+                buttons[selectedIndex].classList.add('wrong');
+                buttons[selectedIndex].style.background = '#ef4444';
+                buttons[selectedIndex].style.color = 'white';
+                buttons[selectedIndex].style.borderColor = '#ef4444';
+                buttons[question.correct].style.background = primaryColor;
+                buttons[question.correct].style.color = 'white';
+                buttons[question.correct].style.borderColor = primaryColor;
+            }
+            
+            buttons.forEach(btn => btn.disabled = true);
+            
+            setTimeout(() => {
+                currentQuizIndex++;
+                render();
+            }, 1500);
+        };
+
+        window.restartQuiz = function() {
+            currentQuizIndex = 0;
+            quizScore = 0;
+            render();
+        };
+
+        const element = {
+            defaultConfig,
+            onConfigChange,
+            mapToCapabilities: (config) => ({
+                recolorables: [
+                    {
+                        get: () => config.primary_color || defaultConfig.primary_color,
+                        set: (value) => {
+                            config.primary_color = value;
+                            if (window.elementSdk) {
+                                window.elementSdk.setConfig({ primary_color: value });
+                            }
+                        }
+                    },
+                    {
+                        get: () => config.secondary_color || defaultConfig.secondary_color,
+                        set: (value) => {
+                            config.secondary_color = value;
+                            if (window.elementSdk) {
+                                window.elementSdk.setConfig({ secondary_color: value });
+                            }
+                        }
+                    },
+                    {
+                        get: () => config.text_color || defaultConfig.text_color,
+                        set: (value) => {
+                            config.text_color = value;
+                            if (window.elementSdk) {
+                                window.elementSdk.setConfig({ text_color: value });
+                            }
+                        }
+                    },
+                    {
+                        get: () => config.accent_color || defaultConfig.accent_color,
+                        set: (value) => {
+                            config.accent_color = value;
+                            if (window.elementSdk) {
+                                window.elementSdk.setConfig({ accent_color: value });
+                            }
+                        }
+                    },
+                    {
+                        get: () => config.surface_color || defaultConfig.surface_color,
+                        set: (value) => {
+                            config.surface_color = value;
+                            if (window.elementSdk) {
+                                window.elementSdk.setConfig({ surface_color: value });
+                            }
+                        }
+                    }
+                ],
+                borderables: [],
+                fontEditable: {
+                    get: () => config.font_family || defaultConfig.font_family,
+                    set: (value) => {
+                        config.font_family = value;
+                        if (window.elementSdk) {
+                            window.elementSdk.setConfig({ font_family: value });
+                        }
+                    }
+                },
+                fontSizeable: {
+                    get: () => config.font_size || defaultConfig.font_size,
+                    set: (value) => {
+                        config.font_size = value;
+                        if (window.elementSdk) {
+                            window.elementSdk.setConfig({ font_size: value });
+                        }
+                    }
+                }
+            }),
+            mapToEditPanelValues: (config) => new Map([
+                ["app_title", config.app_title || defaultConfig.app_title],
+                ["app_subtitle", config.app_subtitle || defaultConfig.app_subtitle]
+            ])
+        };
+
+        if (window.elementSdk) {
+            window.elementSdk.init(element);
+        } else {
+            onConfigChange(defaultConfig);
+        }
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b357b82069ced53',t:'MTc2NjYzNTc2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
